@@ -4,7 +4,7 @@
 
 # 🏷️ TenTags Studio & Gallery
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Jandos77/tentags-studio)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/Jandos77/tentags-studio)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
 A professional low-code visual designer and programmatically compiled dashboard generation suite powered by the **TenTags** library. This project allows developers to visually design complex styled matrices and export them into high-fidelity PDF documents, formatted Excel spreadsheets, and clean HTML pages.
@@ -163,6 +163,19 @@ This generates all corresponding `.html`, `.xlsx`, and `.pdf` files in the `expo
 - **Image Processing**: Pillow (PIL)
 - **Formatting Engines**: `openpyxl`, `reportlab` (internal to `tentags` rendering)
 - **Compiler**: Python `ast` (Abstract Syntax Trees) & `subprocess` execution
+
+---
+
+## 📝 Release History
+
+### v1.0.1 (Current)
+- **CSV Data & Style Exports**: Added `Save Data as CSV` and `Save Style as CSV` toolbar buttons to save visual designer grids back to templates.
+- **Visual Clear Option**: Added `Clear Data & Style` toolbar button with confirmation dialogs to quickly reset data/style matrices.
+- **Website Template Gallery**: Developed a responsive templates gallery on the official website showcasing matched BI, Kanban, and Financial layouts.
+
+### v1.0.0
+- **Initial Launch**: AST-driven bi-directional visual editor, programmatic compilation pipelines, and HTML/Excel/PDF rendering outputs.
+- **CSV Imports**: Built-in visual loaders to load data and styles from CSV with dimension-syncing padding helpers.
 
 ---
 

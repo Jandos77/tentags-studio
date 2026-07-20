@@ -2056,6 +2056,21 @@ class CodeEditor(ttk.LabelFrame):
             size=11
         )
 
+        self.linenumbers = tk.Text(
+            self,
+            font=self.font,
+            width=4,
+            padx=5,
+            pady=5,
+            takefocus=0,
+            border=0,
+            background="#f3f3f3",
+            foreground="#a1a1a1",
+            state="disabled",
+            wrap="none"
+        )
+        self.linenumbers.tag_configure("right_align", justify="right")
+
         self.text = tk.Text(
             self,
             font=self.font,
@@ -2068,10 +2083,14 @@ class CodeEditor(ttk.LabelFrame):
             pady=5
         )
 
+        def on_scrollbar(*args):
+            self.text.yview(*args)
+            self.linenumbers.yview(*args)
+
         vs = ttk.Scrollbar(
             self,
             orient="vertical",
-            command=self.text.yview
+            command=on_scrollbar
         )
 
         hs = ttk.Scrollbar(
@@ -2080,31 +2099,46 @@ class CodeEditor(ttk.LabelFrame):
             command=self.text.xview
         )
 
+        def on_text_scroll(*args):
+            vs.set(*args)
+            self.linenumbers.yview_moveto(args[0])
+
         self.text.configure(
-            yscrollcommand=vs.set,
+            yscrollcommand=on_text_scroll,
             xscrollcommand=hs.set
+        )
+
+        self.linenumbers.grid(
+            row=0,
+            column=0,
+            sticky="ns"
         )
 
         self.text.grid(
             row=0,
-            column=0,
+            column=1,
             sticky="nsew"
         )
 
         vs.grid(
             row=0,
-            column=1,
+            column=2,
             sticky="ns"
         )
 
         hs.grid(
             row=1,
-            column=0,
+            column=1,
             sticky="ew"
         )
 
         self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+
+        self.linenumbers.bind(
+            "<MouseWheel>",
+            lambda event: self.text.yview_scroll(int(-event.delta / 120), "units")
+        )
 
         self.text.bind("<<Modified>>", self._on_modified)
         self.text.bind("<Tab>", self._indent)
@@ -2298,8 +2332,27 @@ class CodeEditor(ttk.LabelFrame):
 
         if self.text.edit_modified():
             self.text.edit_modified(False)
+            self.update_line_numbers()
             if self.modified_callback:
                 self.modified_callback()
+
+    def update_line_numbers(self):
+
+        if not hasattr(self, "linenumbers"):
+            return
+
+        self.linenumbers.configure(state="normal")
+        self.linenumbers.delete("1.0", "end")
+
+        line_count = int(self.text.index("end-1c").split(".")[0])
+        numbers_str = "\n".join(str(i) for i in range(1, line_count + 1))
+
+        width = max(3, len(str(line_count)))
+        self.linenumbers.configure(width=width)
+
+        self.linenumbers.insert("1.0", numbers_str, "right_align")
+        self.linenumbers.configure(state="disabled")
+        self.linenumbers.yview_moveto(self.text.yview()[0])
 
     def load_template(self):
 
@@ -2314,6 +2367,7 @@ class CodeEditor(ttk.LabelFrame):
         self.text.insert("1.0", code)
         self.text.edit_modified(False)
         self.suppress_modified = False
+        self.update_line_numbers()
 
     def mark_clean(self):
 
@@ -2322,11 +2376,6 @@ class CodeEditor(ttk.LabelFrame):
     def get_code(self):
 
         return self.text.get("1.0", "end-1c")
-
-
-# ============================================================
-# Status Bar
-# ============================================================
 
 class StatusBar(ttk.Frame):
 
@@ -2429,8 +2478,7 @@ class TenTagsStudio(tk.Tk):
         self.workspace.add(
             self.editor,
             minsize=120,
-            stretch="always",
-            padx=15
+            stretch="always"
         )
 
         self.main.add(

@@ -2110,31 +2110,55 @@ class CodeEditor(ttk.LabelFrame):
             xscrollcommand=hs.set
         )
 
-        self.linenumbers.grid(
+        # Editor toolbar
+        self.editor_toolbar = ttk.Frame(self)
+        self.editor_toolbar.grid(
             row=0,
+            column=0,
+            columnspan=3,
+            sticky="ew",
+            pady=(2, 5)
+        )
+
+        self.import_style_btn = ttk.Button(
+            self.editor_toolbar,
+            text="Import Style as CSV",
+            command=self.import_style_csv
+        )
+        self.import_style_btn.pack(side="left", padx=5)
+
+        self.import_data_btn = ttk.Button(
+            self.editor_toolbar,
+            text="Import Data as CSV",
+            command=self.import_data_csv
+        )
+        self.import_data_btn.pack(side="left", padx=5)
+
+        self.linenumbers.grid(
+            row=1,
             column=0,
             sticky="ns"
         )
 
         self.text.grid(
-            row=0,
+            row=1,
             column=1,
             sticky="nsew"
         )
 
         vs.grid(
-            row=0,
+            row=1,
             column=2,
             sticky="ns"
         )
 
         hs.grid(
-            row=1,
+            row=2,
             column=1,
             sticky="ew"
         )
 
-        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
         self.columnconfigure(1, weight=1)
 
         self.linenumbers.bind(
@@ -2378,6 +2402,171 @@ class CodeEditor(ttk.LabelFrame):
     def get_code(self):
 
         return self.text.get("1.0", "end-1c")
+
+    def import_style_csv(self):
+        self._import_csv("style")
+
+    def import_data_csv(self):
+        self._import_csv("data")
+
+    def _import_csv(self, target_var):
+        import re
+        import csv
+
+        # Open file chooser
+        file_path = filedialog.askopenfilename(
+            title=f"Import {target_var.capitalize()} as CSV",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            parent=self
+        )
+        if not file_path:
+            return
+
+        csv_rows = []
+        try:
+            with open(file_path, "r", encoding="utf-8-sig") as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    csv_rows.append(row)
+        except Exception:
+            try:
+                with open(file_path, "r", encoding="cp1251") as f:
+                    reader = csv.reader(f)
+                    for row in reader:
+                        csv_rows.append(row)
+            except Exception as exc:
+                messagebox.showerror(
+                    "Import Error",
+                    f"Failed to read CSV file: {exc}",
+                    parent=self
+                )
+                return
+
+        if not csv_rows:
+            messagebox.showwarning(
+                "Empty File",
+                "The selected CSV file contains no rows.",
+                parent=self
+            )
+            return
+
+        # Extract current code
+        code = self.get_code()
+        app = self.winfo_toplevel()
+
+        try:
+            preamble_str = app.extract_literal_assignment(code, "preamble")
+            style_str = app.extract_literal_assignment(code, "style")
+            data_str = app.extract_literal_assignment(code, "data")
+        except Exception as exc:
+            messagebox.showerror(
+                "Parse Error",
+                f"Cannot parse current code. Please fix any syntax errors first:\n{exc}",
+                parent=self
+            )
+            return
+
+        if preamble_str is None or style_str is None or data_str is None:
+            messagebox.showerror(
+                "Parse Error",
+                "Cannot find literal assignments for preamble, style, or data in the code.",
+                parent=self
+            )
+            return
+
+        # Parse existing matrices
+        def parse_matrix(matrix_str, var_name):
+            inner = matrix_str.strip()
+            prefix = f"{var_name}("
+            if inner.lower().startswith(prefix.lower()):
+                inner = inner[len(prefix):]
+            if inner.endswith(")"):
+                inner = inner[:-1]
+            inner = inner.strip()
+
+            raw_rows = inner.split(";")
+            rows_list = []
+            for r in raw_rows:
+                r_clean = r.strip()
+                if r_clean or len(raw_rows) > 1:
+                    cells = [c.strip() for c in r_clean.split(",")]
+                    rows_list.append(cells)
+            return rows_list
+
+        style_rows = parse_matrix(style_str, "style")
+        data_rows = parse_matrix(data_str, "data")
+
+        # Append to target matrix
+        if target_var == "style":
+            # Strip trailing empty rows from style so it aligns with active data
+            while style_rows and all(c == "" for c in style_rows[-1]):
+                style_rows.pop()
+            style_rows.extend(csv_rows)
+        else:
+            # Strip trailing empty rows from data so it aligns with active style
+            while data_rows and all(c == "" for c in data_rows[-1]):
+                data_rows.pop()
+            data_rows.extend(csv_rows)
+
+        # Determine new dimensions
+        new_rows = max(len(style_rows), len(data_rows))
+        new_cols = max(
+            max(len(r) for r in style_rows) if style_rows else 0,
+            max(len(r) for r in data_rows) if data_rows else 0
+        )
+
+        # Re-serialize matrices
+        def serialize_matrix(rows_list, var_name, target_rows, target_cols):
+            # Pad columns
+            for row in rows_list:
+                while len(row) < target_cols:
+                    row.append("")
+            # Pad rows
+            while len(rows_list) < target_rows:
+                rows_list.append([""] * target_cols)
+
+            serialized = []
+            for row in rows_list:
+                serialized.append(", ".join(row))
+            return f"{var_name}(\n" + ";\n".join(serialized) + "\n)"
+
+        new_style_val = serialize_matrix(style_rows, "style", new_rows, new_cols)
+        new_data_val = serialize_matrix(data_rows, "data", new_rows, new_cols)
+
+        # Update preamble dimensions
+        m = re.match(r"^(\d+)\s*,\s*(\d+)(.*)$", preamble_str.strip())
+        if not m:
+            messagebox.showerror(
+                "Preamble Error",
+                "Failed to parse dimensions from preamble.",
+                parent=self
+            )
+            return
+        new_preamble_val = f"{new_rows},{new_cols}{m.group(3)}"
+
+        # Replace back into code
+        try:
+            new_code = code
+            new_code = app.replace_literal_assignment(new_code, "preamble", new_preamble_val)
+            new_code = app.replace_literal_assignment(new_code, "style", new_style_val)
+            new_code = app.replace_literal_assignment(new_code, "data", new_data_val)
+        except Exception as exc:
+            messagebox.showerror(
+                "Replacement Error",
+                f"Failed to update code: {exc}",
+                parent=self
+            )
+            return
+
+        # Update editor code
+        self.set_code(new_code)
+        # Trigger modification callback to update designer
+        self._on_modified()
+        messagebox.showinfo(
+            "Success",
+            f"Successfully imported and appended CSV rows to {target_var}.",
+            parent=self
+        )
 
 class StatusBar(ttk.Frame):
 

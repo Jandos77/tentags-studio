@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="TenTags_Demo_Studio/tentags_studio_icon.png" width="128" alt="TenTags Studio Logo">
+</p>
+
 # 🏷️ TenTags Studio & Gallery
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Jandos77/tentags-studio)

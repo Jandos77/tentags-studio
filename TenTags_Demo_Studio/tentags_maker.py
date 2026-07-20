@@ -2430,6 +2430,19 @@ class TenTagsStudio(tk.Tk):
         )
 
         self.title("TenTags Studio")
+
+        # Load and set application icon
+        try:
+            icon_path = APP_DIR / "tentags_studio_icon.png"
+            if icon_path.is_file():
+                from PIL import Image, ImageTk
+                with Image.open(icon_path) as img:
+                    photo = ImageTk.PhotoImage(img)
+                    self.iconphoto(False, photo)
+                    self._icon_ref = photo
+        except Exception:
+            pass
+
         self.geometry("1700x900")
         self.minsize(1300, 700)
         self.code_dirty = False

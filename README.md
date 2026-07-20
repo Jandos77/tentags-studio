@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="TenTags_Demo_Studio/tentags_studio_icon.png" width="128" alt="TenTags Studio Logo">
+  <img src="TenTags_Demo_Studio/tentags_studio_icon.png?v=2" width="128" alt="TenTags Studio Logo">
 </p>
 
 # 🏷️ TenTags Studio & Gallery

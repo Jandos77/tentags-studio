@@ -24,7 +24,7 @@ DEFAULT_PREAMBLE = '4,7,1,"#cbd5e1","solid-1",1,48'
 DEFAULT_STYLE = """style(
 <cm><bg=#1e293b><color=#f8fafc><b><fs=20px>, , , , , , </fs></b></color></bg></cm>;
 <center><bg=#f1f5f9><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#e2e8f0><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#cbd5e1><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#94a3b8><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#64748b><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#475569><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#334155><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>;
-<cm><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></cm>, , <center><bg=#ffffff></bg></center>, , <cm><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></cm>, , ;
+<cm><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></cm>, , , <center><bg=#ffffff></bg></center>, <cm><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></cm>, , ;
 <cm><bg=#eff6ff><color=#1d4ed8><b><u><fs=14px>, , , , , , </fs></u></b></color></bg></cm>
 )"""
 
@@ -3735,11 +3735,13 @@ class TenTagsStudio(tk.Tk):
             process_env["PYTHONUTF8"] = "1"
             process_env["PYTHONIOENCODING"] = "utf-8"
             existing_pythonpath = process_env.get("PYTHONPATH")
+            parent_dir = str(APP_DIR.parent)
             process_env["PYTHONPATH"] = (
-                str(APP_DIR)
+                f"{APP_DIR}{os.pathsep}{parent_dir}"
                 if not existing_pythonpath
-                else str(APP_DIR) + os.pathsep + existing_pythonpath
+                else f"{APP_DIR}{os.pathsep}{parent_dir}{os.pathsep}{existing_pythonpath}"
             )
+
             result = subprocess.run(
                 [sys.executable, str(script_path)],
                 cwd=str(APP_DIR),

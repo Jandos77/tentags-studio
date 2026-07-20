@@ -2159,6 +2159,22 @@ class CodeEditor(ttk.LabelFrame):
         )
         self.import_data_btn.pack(side="left", padx=5)
 
+        self.clear_btn = tk.Button(
+            self.editor_toolbar,
+            text="Clear Data & Style",
+            command=self.clear_data_style,
+            font=button_font,
+            bg="#f1f5f9",         # Light slate background
+            fg="#ef4444",         # Warning red foreground
+            activebackground="#fee2e2",
+            activeforeground="#991b1b",
+            bd=0,                 # Flat borderless design
+            padx=10,
+            pady=4,
+            cursor="hand2"
+        )
+        self.clear_btn.pack(side="left", padx=30)
+
         self.save_data_btn = tk.Button(
             self.editor_toolbar,
             text="Save Data as CSV",
@@ -2198,6 +2214,12 @@ class CodeEditor(ttk.LabelFrame):
         def on_btn_leave(event):
             event.widget.configure(bg="#f1f5f9", fg="#475569")
 
+        def on_clear_enter(event):
+            event.widget.configure(bg="#fee2e2", fg="#991b1b")
+
+        def on_clear_leave(event):
+            event.widget.configure(bg="#f1f5f9", fg="#ef4444")
+
         self.import_style_btn.bind("<Enter>", on_btn_enter)
         self.import_style_btn.bind("<Leave>", on_btn_leave)
         self.import_data_btn.bind("<Enter>", on_btn_enter)
@@ -2206,6 +2228,8 @@ class CodeEditor(ttk.LabelFrame):
         self.save_style_btn.bind("<Leave>", on_btn_leave)
         self.save_data_btn.bind("<Enter>", on_btn_enter)
         self.save_data_btn.bind("<Leave>", on_btn_leave)
+        self.clear_btn.bind("<Enter>", on_clear_enter)
+        self.clear_btn.bind("<Leave>", on_clear_leave)
 
         self.linenumbers.grid(
             row=1,
@@ -2638,6 +2662,49 @@ class CodeEditor(ttk.LabelFrame):
         messagebox.showinfo(
             "Success",
             f"Successfully imported and appended CSV rows to {target_var}.",
+            parent=self
+        )
+
+    def clear_data_style(self):
+        if not messagebox.askyesno(
+            "Confirm Clear",
+            "Are you sure you want to clear all data and style matrices from the editor?",
+            parent=self
+        ):
+            return
+
+        code = self.get_code()
+        app = self.winfo_toplevel()
+
+        try:
+            preamble_str = app.extract_literal_assignment(code, "preamble")
+        except Exception:
+            preamble_str = None
+
+        if not preamble_str:
+            preamble_str = '1,1,1,"#cbd5e1","solid-1",1,30'
+
+        try:
+            new_code = app.build_code(preamble_str, "style(\n)", "data(\n)")
+        except Exception as exc:
+            messagebox.showerror(
+                "Clear Error",
+                f"Failed to generate cleared code template: {exc}",
+                parent=self
+            )
+            return
+
+        self.set_code(new_code)
+        self._on_modified()
+
+        try:
+            app.regenerate()
+        except Exception:
+            pass
+
+        messagebox.showinfo(
+            "Cleared",
+            "Successfully cleared all data and style matrices.",
             parent=self
         )
 

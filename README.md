@@ -4,7 +4,7 @@
 
 # 🏷️ TenTags Studio & Gallery
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/Jandos77/tentags-studio)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/Jandos77/tentags-studio)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
 A professional low-code visual designer and programmatically compiled dashboard generation suite powered by the **TenTags** library. This project allows developers to visually design complex styled matrices and export them into high-fidelity PDF documents, formatted Excel spreadsheets, and clean HTML pages.
@@ -168,7 +168,14 @@ This generates all corresponding `.html`, `.xlsx`, and `.pdf` files in the `expo
 
 ## 📝 Release History
 
-### v1.0.1 (Current)
+### v1.0.2 (Current)
+- **Output Settings UI**: Added custom file name entry input block in Output panel.
+- **Auto-Sync and Auto-Export**: Automatic synchronization of Output panel settings (like filename and format toggles) upon `Regenerate` or `Copy Code` calls.
+- **Raw Script copy**: Automated raw Python script execution backup in the exports folder under the custom name.
+- **One-click Directory access**: Added `📂 Open Exports` shortcut button to the toolbar to open output files directory directly.
+- **Safe Visual Reset**: Upgraded editor clearing routine to sync GUI views directly without writing empty files to storage.
+
+### v1.0.1
 - **CSV Data & Style Exports**: Added `Save Data as CSV` and `Save Style as CSV` toolbar buttons to save visual designer grids back to templates.
 - **Visual Clear Option**: Added `Clear Data & Style` toolbar button with confirmation dialogs to quickly reset data/style matrices.
 - **Website Template Gallery**: Developed a responsive templates gallery on the official website showcasing matched BI, Kanban, and Financial layouts.

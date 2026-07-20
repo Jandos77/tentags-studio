@@ -1478,6 +1478,13 @@ class CellProperties(ttk.LabelFrame):
 
     def _build_output_panel(self, pad):
 
+        # File Name Section
+        filename_box = ttk.LabelFrame(self.output_panel, text="Export File Name")
+        filename_box.pack(fill="x", padx=pad, pady=(5, 4))
+        self.export_filename = ttk.Entry(filename_box)
+        self.export_filename.insert(0, "report")
+        self.export_filename.pack(fill="x", padx=6, pady=5)
+
         formats = ttk.LabelFrame(self.output_panel, text="Formats")
         formats.pack(fill="x", padx=pad, pady=(5, 4))
 
@@ -1637,6 +1644,10 @@ class CellProperties(ttk.LabelFrame):
 
     def get_output_settings(self):
 
+        filename = self.export_filename.get().strip() or "report"
+        if any(char in filename for char in '<>:|?*"/\\'):
+            raise ValueError("Filename cannot contain `<>:|?*\"/\\` characters")
+
         margins = tuple(float(entry.get()) for entry in self.pdf_margins)
         if any(value < 0 for value in margins):
             raise ValueError("PDF margins cannot be negative")
@@ -1649,6 +1660,7 @@ class CellProperties(ttk.LabelFrame):
             )
 
         return {
+            "filename": filename,
             "html": self.var_html.get(),
             "pdf": self.var_pdf.get(),
             "xlsx": self.var_xlsx.get(),
@@ -2009,6 +2021,17 @@ class Toolbar(ttk.Frame):
             side="right",
             padx=3,
             before=self.regenerate_btn
+        )
+
+        self.open_exports_btn = ttk.Button(
+            self,
+            text="📂 Open Exports"
+        )
+
+        self.open_exports_btn.pack(
+            side="right",
+            padx=3,
+            before=self.refresh_btn
         )
 
     def show_regenerate(self):
@@ -2707,6 +2730,8 @@ class CodeEditor(ttk.LabelFrame):
             app.cell_properties.xlsx_sheet_name.insert(0, "Table")
             app.cell_properties.xlsx_fit_to_page.set(True)
             app.cell_properties.xlsx_gridlines.set(True)
+            app.cell_properties.export_filename.delete(0, "end")
+            app.cell_properties.export_filename.insert(0, "report")
         except Exception:
             pass
 
@@ -2724,7 +2749,9 @@ class CodeEditor(ttk.LabelFrame):
         self._on_modified()
 
         try:
-            app.regenerate()
+            model = tentags.compile(preamble_str, "style()", "data()")
+            app.synchronize_model_to_designer(model, preamble_str)
+            app.mark_code_clean()
         except Exception:
             pass
 
@@ -2985,6 +3012,10 @@ class TenTagsStudio(tk.Tk):
 
         self.toolbar.refresh_btn.configure(
             command=self.refresh_preview
+        )
+
+        self.toolbar.open_exports_btn.configure(
+            command=self.open_exports_folder
         )
 
         self.editor.set_modified_callback(self.on_code_modified)
@@ -3298,13 +3329,13 @@ class TenTagsStudio(tk.Tk):
                     "    + html_table",
                     '    + "</body></html>"',
                     ")",
-                    'html_path = _export_dir / "report.html"',
+                    'html_path = _export_dir / ' + repr(f"{settings['filename']}.html"),
                     'with open(html_path, "w", encoding="utf-8") as f:',
                     "    f.write(html_document)",
                 ])
             else:
                 lines.extend([
-                    'html_path = _export_dir / "report.html"',
+                    'html_path = _export_dir / ' + repr(f"{settings['filename']}.html"),
                     'with open(html_path, "w", encoding="utf-8") as f:',
                     "    f.write(tentags.render_html(model))",
                 ])
@@ -3320,7 +3351,7 @@ class TenTagsStudio(tk.Tk):
                 "from studio_renderers import render_pdf_with_images as _render_pdf",
                 "",
                 f"pdf_settings = {pdf_settings!r}",
-                'pdf_path = _export_dir / "report.pdf"',
+                'pdf_path = _export_dir / ' + repr(f"{settings['filename']}.pdf"),
                 '_render_pdf(model, str(pdf_path), settings=pdf_settings)',
             ])
 
@@ -3338,7 +3369,7 @@ class TenTagsStudio(tk.Tk):
                 "from openpyxl import load_workbook as _load_workbook",
                 "from studio_renderers import render_xlsx_with_images as _render_xlsx",
                 "",
-                'xlsx_path = _export_dir / "report.xlsx"',
+                'xlsx_path = _export_dir / ' + repr(f"{settings['filename']}.xlsx"),
                 '_render_xlsx(model, str(xlsx_path))',
                 'workbook = _load_workbook(str(xlsx_path))',
                 "worksheet = workbook.active",
@@ -3357,6 +3388,17 @@ class TenTagsStudio(tk.Tk):
                     "worksheet.page_setup.fitToHeight = 0",
                 ])
             lines.append('workbook.save(str(xlsx_path))')
+
+        # Save raw .py file
+        lines.extend([
+            "",
+            "try:",
+            '    py_path = _export_dir / ' + repr(f"{settings['filename']}.py"),
+            "    import shutil",
+            "    shutil.copy2(__file__, py_path)",
+            "except Exception:",
+            "    pass",
+        ])
 
         lines.append("# </tentags-output>")
         return "\n".join(lines)
@@ -3776,7 +3818,23 @@ class TenTagsStudio(tk.Tk):
             messagebox.showerror("Generation error", str(exc), parent=self)
             self.status.set("Generation failed")
 
+    def open_exports_folder(self):
+
+        export_dir = APP_DIR.parent / "export_files"
+        export_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            os.startfile(str(export_dir))
+            self.status.set(f"Opened exports folder: {export_dir}")
+        except Exception as exc:
+            messagebox.showerror("Error", f"Failed to open exports folder: {exc}", parent=self)
+
     def copy_code(self):
+
+        # Auto-apply output settings so the copied code is also in sync with the UI!
+        try:
+            self.cell_properties.apply_output_settings()
+        except Exception:
+            pass
 
         code = self.editor.get_code()
         self.clipboard_clear()
@@ -4161,6 +4219,12 @@ class TenTagsStudio(tk.Tk):
         )
 
     def regenerate(self):
+
+        # Auto-apply output settings to keep the output block in the code in sync with the UI entries!
+        try:
+            self.cell_properties.apply_output_settings()
+        except Exception:
+            pass
 
         code = self.editor.get_code()
 

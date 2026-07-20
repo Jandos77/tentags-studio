@@ -101,6 +101,7 @@ with open("table.html", "w", encoding="utf-8") as f:
 
 ```text
 d:\TenTags Studio
+├── export_files/              # Auto-created output folder for HTML/PDF/XLSX exports (git-ignored)
 ├── TenTags_Demo_Studio/
 │   └── tentags_maker.py       # Main visual studio desktop application (Tkinter)
 ├── bi_dashboard.py            # BI report compiler script
@@ -149,7 +150,10 @@ To compile and generate HTML, PDF, and XLSX files for all gallery dashboards:
 ```powershell
 python generate_all.py
 ```
-This generates corresponding `.html`, `.xlsx`, and `.pdf` files next to each script in the directory.
+This generates all corresponding `.html`, `.xlsx`, and `.pdf` files in the `export_files/` directory at the project root. 
+
+> [!NOTE]
+> The `export_files/` directory is created automatically on the first compilation run. You do not need to create it manually, and it is excluded from Git tracking to keep the repository clean.
 
 ---
 

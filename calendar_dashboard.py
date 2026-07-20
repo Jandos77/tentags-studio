@@ -3,7 +3,7 @@ import calendar
 import datetime
 import tentags
 
-OUTPUT_DIR = Path(__file__).resolve().parent
+OUTPUT_DIR = Path(__file__).resolve().parent / "export_files"
 
 
 def column_name(index):
@@ -73,6 +73,7 @@ def export_dashboard(
     margins=(20, 20, 20, 20),
     page_size="A4",
 ):
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     html_path = OUTPUT_DIR / f"{name}.html"
     xlsx_path = OUTPUT_DIR / f"{name}.xlsx"
     pdf_path = OUTPUT_DIR / f"{name}.pdf"

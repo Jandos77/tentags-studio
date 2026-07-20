@@ -2810,7 +2810,24 @@ class TenTagsStudio(tk.Tk):
     def build_output_code(self):
 
         settings = self.cell_properties.get_output_settings()
-        lines = ["# <tentags-output>"]
+        lines = [
+            "# <tentags-output>",
+            "import os",
+            "from pathlib import Path",
+            "",
+            '_proj_root = os.environ.get("TENTAGS_PROJECT_ROOT")',
+            "if _proj_root:",
+            '    _export_dir = Path(_proj_root) / "export_files"',
+            "else:",
+            "    _file_dir = Path(__file__).resolve().parent",
+            '    if (_file_dir / "export_files").is_dir():',
+            '        _export_dir = _file_dir / "export_files"',
+            '    elif (_file_dir.parent / "export_files").is_dir():',
+            '        _export_dir = _file_dir.parent / "export_files"',
+            "    else:",
+            "        _export_dir = _file_dir",
+            "os.makedirs(_export_dir, exist_ok=True)",
+        ]
 
         if settings["html"]:
             lines.append("")
@@ -2826,12 +2843,14 @@ class TenTagsStudio(tk.Tk):
                     "    + html_table",
                     '    + "</body></html>"',
                     ")",
-                    'with open("report.html", "w", encoding="utf-8") as f:',
+                    'html_path = _export_dir / "report.html"',
+                    'with open(html_path, "w", encoding="utf-8") as f:',
                     "    f.write(html_document)",
                 ])
             else:
                 lines.extend([
-                    'with open("report.html", "w", encoding="utf-8") as f:',
+                    'html_path = _export_dir / "report.html"',
+                    'with open(html_path, "w", encoding="utf-8") as f:',
                     "    f.write(tentags.render_html(model))",
                 ])
 
@@ -2846,7 +2865,8 @@ class TenTagsStudio(tk.Tk):
                 "from studio_renderers import render_pdf_with_images as _render_pdf",
                 "",
                 f"pdf_settings = {pdf_settings!r}",
-                '_render_pdf(model, "report.pdf", settings=pdf_settings)',
+                'pdf_path = _export_dir / "report.pdf"',
+                '_render_pdf(model, str(pdf_path), settings=pdf_settings)',
             ])
 
         if settings["xlsx"]:
@@ -2863,8 +2883,9 @@ class TenTagsStudio(tk.Tk):
                 "from openpyxl import load_workbook as _load_workbook",
                 "from studio_renderers import render_xlsx_with_images as _render_xlsx",
                 "",
-                '_render_xlsx(model, "report.xlsx")',
-                'workbook = _load_workbook("report.xlsx")',
+                'xlsx_path = _export_dir / "report.xlsx"',
+                '_render_xlsx(model, str(xlsx_path))',
+                'workbook = _load_workbook(str(xlsx_path))',
                 "worksheet = workbook.active",
                 f'worksheet.title = {settings["xlsx_sheet_name"]!r}',
                 f'worksheet.page_setup.orientation = {settings["xlsx_orientation"]!r}',
@@ -2880,7 +2901,7 @@ class TenTagsStudio(tk.Tk):
                     "worksheet.page_setup.fitToWidth = 1",
                     "worksheet.page_setup.fitToHeight = 0",
                 ])
-            lines.append('workbook.save("report.xlsx")')
+            lines.append('workbook.save(str(xlsx_path))')
 
         lines.append("# </tentags-output>")
         return "\n".join(lines)
@@ -3747,6 +3768,7 @@ class TenTagsStudio(tk.Tk):
             process_env = os.environ.copy()
             process_env["PYTHONUTF8"] = "1"
             process_env["PYTHONIOENCODING"] = "utf-8"
+            process_env["TENTAGS_PROJECT_ROOT"] = str(APP_DIR.parent)
             existing_pythonpath = process_env.get("PYTHONPATH")
             parent_dir = str(APP_DIR.parent)
             process_env["PYTHONPATH"] = (

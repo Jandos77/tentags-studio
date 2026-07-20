@@ -4,9 +4,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 SCRIPTS = [
-    "dashboard.py",
+    "bi_dashboard.py",
     "contribution_graph.py",
-    "calendar_july_2026.py",
+    "calendar_dashboard.py",
     "gantt_dashboard.py",
     "kanban_dashboard.py",
 ]

@@ -21,7 +21,7 @@ A professional low-code visual designer and programmatically compiled dashboard 
 - **Output Settings Manager**: Configure margins, paper sizes (A3, A4, Letter, etc.), orientations, sheet names, fit-to-page, and gridlines.
 - **Live Code Sync (AST-driven)**: Write manual Python code or design visually; the app utilizes Python's Abstract Syntax Trees (AST) to keep both views perfectly synchronized.
 - **Asynchronous Compilation & Execution**: Safe script execution in background worker threads with real-time process monitoring.
-- **CSV Data & Style Templates**: Load style structures and raw table content directly from CSV files. It features automatic dimension synchronization, cell padding for mismatched matrices, and smart auto-alignment for sequential imports.
+- **CSV Data & Style Templates**: Load style structures and raw table content directly from CSV files, or export style and data matrices back to CSV. It features automatic dimension synchronization, cell padding for mismatched matrices, and smart auto-alignment for sequential imports.
 
 ### 📊 Programmatic Dashboard Gallery
 A collection of pre-designed professional dashboards demonstrating the power of the library:

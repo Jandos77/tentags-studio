@@ -2159,6 +2159,38 @@ class CodeEditor(ttk.LabelFrame):
         )
         self.import_data_btn.pack(side="left", padx=5)
 
+        self.save_data_btn = tk.Button(
+            self.editor_toolbar,
+            text="Save Data as CSV",
+            command=self.save_data_csv,
+            font=button_font,
+            bg="#f1f5f9",         # Light slate background
+            fg="#475569",         # Slate foreground
+            activebackground="#e2e8f0",
+            activeforeground="#1e293b",
+            bd=0,                 # Flat borderless design
+            padx=10,
+            pady=4,
+            cursor="hand2"
+        )
+        self.save_data_btn.pack(side="right", padx=5)
+
+        self.save_style_btn = tk.Button(
+            self.editor_toolbar,
+            text="Save Style as CSV",
+            command=self.save_style_csv,
+            font=button_font,
+            bg="#f1f5f9",         # Light slate background
+            fg="#475569",         # Slate foreground
+            activebackground="#e2e8f0",
+            activeforeground="#1e293b",
+            bd=0,                 # Flat borderless design
+            padx=10,
+            pady=4,
+            cursor="hand2"
+        )
+        self.save_style_btn.pack(side="right", padx=5)
+
         # Hover micro-animations
         def on_btn_enter(event):
             event.widget.configure(bg="#e2e8f0", fg="#1e293b")
@@ -2170,6 +2202,10 @@ class CodeEditor(ttk.LabelFrame):
         self.import_style_btn.bind("<Leave>", on_btn_leave)
         self.import_data_btn.bind("<Enter>", on_btn_enter)
         self.import_data_btn.bind("<Leave>", on_btn_leave)
+        self.save_style_btn.bind("<Enter>", on_btn_enter)
+        self.save_style_btn.bind("<Leave>", on_btn_leave)
+        self.save_data_btn.bind("<Enter>", on_btn_enter)
+        self.save_data_btn.bind("<Leave>", on_btn_leave)
 
         self.linenumbers.grid(
             row=1,
@@ -2604,6 +2640,99 @@ class CodeEditor(ttk.LabelFrame):
             f"Successfully imported and appended CSV rows to {target_var}.",
             parent=self
         )
+
+    def save_style_csv(self):
+        self._export_csv("style")
+
+    def save_data_csv(self):
+        self._export_csv("data")
+
+    def _export_csv(self, target_var):
+        import csv
+        # Extract current code
+        code = self.get_code()
+        app = self.winfo_toplevel()
+
+        try:
+            target_str = app.extract_literal_assignment(code, target_var)
+        except Exception as exc:
+            messagebox.showerror(
+                "Parse Error",
+                f"Cannot parse current code. Please fix any syntax errors first:\n{exc}",
+                parent=self
+            )
+            return
+
+        if target_str is None:
+            messagebox.showerror(
+                "Parse Error",
+                f"Cannot find literal assignment for {target_var} in the code.",
+                parent=self
+            )
+            return
+
+        # Parse target_str into matrix
+        def parse_matrix(matrix_str, var_name):
+            inner = matrix_str.strip()
+            prefix = f"{var_name}("
+            if inner.lower().startswith(prefix.lower()):
+                inner = inner[len(prefix):]
+            if inner.endswith(")"):
+                inner = inner[:-1]
+            inner = inner.strip()
+
+            raw_rows = inner.split(";")
+            rows_list = []
+            for r in raw_rows:
+                r_clean = r.strip()
+                if r_clean or len(raw_rows) > 1:
+                    cells = [c.strip() for c in r_clean.split(",")]
+                    rows_list.append(cells)
+            return rows_list
+
+        matrix_rows = parse_matrix(target_str, target_var)
+        if not matrix_rows:
+            messagebox.showwarning(
+                "Export Warning",
+                f"The {target_var} table is empty.",
+                parent=self
+            )
+            return
+
+        # Open file chooser to save
+        file_path = filedialog.asksaveasfilename(
+            title=f"Save {target_var.capitalize()} as CSV",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            defaultextension=".csv",
+            parent=self
+        )
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, "w", encoding="utf-8-sig", newline="") as f:
+                writer = csv.writer(f)
+                for row in matrix_rows:
+                    cleaned_row = []
+                    for cell in row:
+                        cell_val = cell.strip()
+                        # Strip outer quotes: single or double quotes
+                        if len(cell_val) >= 2 and ((cell_val[0] == '"' and cell_val[-1] == '"') or (cell_val[0] == "'" and cell_val[-1] == "'")):
+                            cell_val = cell_val[1:-1]
+                        cleaned_row.append(cell_val)
+                    writer.writerow(cleaned_row)
+
+            messagebox.showinfo(
+                "Export Success",
+                f"Successfully exported {target_var} to {file_path}",
+                parent=self
+            )
+        except Exception as exc:
+            messagebox.showerror(
+                "Export Error",
+                f"Failed to write CSV file:\n{exc}",
+                parent=self
+            )
 
 class StatusBar(ttk.Frame):
 

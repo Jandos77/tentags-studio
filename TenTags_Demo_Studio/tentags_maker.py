@@ -3063,19 +3063,19 @@ class TenTagsStudio(tk.Tk):
 
         layers = [
             (
-                lambda state: state.align.lower(),
-                lambda value: f"<{value}>",
-                lambda value: f"</{value}>",
+                lambda state: "" if state.align.lower() == "center" else state.align.lower(),
+                lambda value: f"<{value}>" if value else "",
+                lambda value: f"</{value}>" if value else "",
             ),
             (
-                lambda state: state.bg,
-                lambda value: f"<bg={value}>",
-                lambda value: "</bg>",
+                lambda state: "" if state.bg.lower() == "#ffffff" else state.bg,
+                lambda value: f"<bg={value}>" if value else "",
+                lambda value: "</bg>" if value else "",
             ),
             (
-                lambda state: state.fg,
-                lambda value: f"<color={value}>",
-                lambda value: "</color>",
+                lambda state: "" if state.fg.lower() == "#000000" else state.fg,
+                lambda value: f"<color={value}>" if value else "",
+                lambda value: "</color>" if value else "",
             ),
             (
                 lambda state: state.bold,

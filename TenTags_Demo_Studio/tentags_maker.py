@@ -2668,7 +2668,7 @@ class CodeEditor(ttk.LabelFrame):
     def clear_data_style(self):
         if not messagebox.askyesno(
             "Confirm Clear",
-            "Are you sure you want to clear all data and style matrices from the editor?",
+            "Are you sure you want to clear all data, style, and output settings from the editor?",
             parent=self
         ):
             return
@@ -2682,7 +2682,33 @@ class CodeEditor(ttk.LabelFrame):
             preamble_str = None
 
         if not preamble_str:
-            preamble_str = '1,1,1,"#cbd5e1","solid-1",1,30'
+            preamble_str = '4,7,1,"#cbd5e1","solid-1",1,48'
+        else:
+            # Strip scale(...) parameters from the preamble so row/column scale rules are cleared
+            import re
+            preamble_str = re.sub(r",\s*scale\([^)]*\)", "", preamble_str)
+
+        # 1. Reset scale variables in left Properties panel
+        try:
+            app.properties.scale.delete(0, "end")
+        except Exception:
+            pass
+
+        # 2. Reset output/layout variables in right CellProperties panel
+        try:
+            app.cell_properties.pdf_page_size.set("A4")
+            app.cell_properties.pdf_orientation.set("portrait")
+            for entry in app.cell_properties.pdf_margins:
+                entry.delete(0, "end")
+                entry.insert(0, "36")
+            app.cell_properties.xlsx_page_size.set("A4")
+            app.cell_properties.xlsx_orientation.set("portrait")
+            app.cell_properties.xlsx_sheet_name.delete(0, "end")
+            app.cell_properties.xlsx_sheet_name.insert(0, "Table")
+            app.cell_properties.xlsx_fit_to_page.set(True)
+            app.cell_properties.xlsx_gridlines.set(True)
+        except Exception:
+            pass
 
         try:
             new_code = app.build_code(preamble_str, "style(\n)", "data(\n)")
@@ -2704,7 +2730,7 @@ class CodeEditor(ttk.LabelFrame):
 
         messagebox.showinfo(
             "Cleared",
-            "Successfully cleared all data and style matrices.",
+            "Successfully cleared all data, styles, and output settings.",
             parent=self
         )
 
@@ -3141,6 +3167,8 @@ class TenTagsStudio(tk.Tk):
             "".join(prefixes[index] + suffixes[index])
             for index in range(len(states))
         ]
+        if all(expr.strip() == "" for expr in expressions):
+            return "style(\n)"
         rows = [
             ", ".join(expressions[row * self.designer.cols:(row + 1) * self.designer.cols])
             for row in range(self.designer.rows)
@@ -3217,10 +3245,15 @@ class TenTagsStudio(tk.Tk):
                 data_grid[row][end_col] += "</cm>"
                 col = end_col + 1
 
-        data_rows = [", ".join(row) for row in data_grid]
+        # Check if all cells in the data grid are completely empty
+        all_data_empty = all(all(cell.strip() == "" for cell in row) for row in data_grid)
+        if all_data_empty:
+            data = "data(\n)"
+        else:
+            data_rows = [", ".join(row) for row in data_grid]
+            data = "data(\n" + ";\n".join(data_rows) + "\n)"
 
         style = self._build_compact_style()
-        data = "data(\n" + ";\n".join(data_rows) + "\n)"
         return style, data
 
     @staticmethod

@@ -46,8 +46,23 @@ The preamble string defines the grid dimensions, borders, and general settings:
 - **cell_height**: Base row height in pixels.
 
 ### 2. Style & Data Syntax
-- **Style Matrix**: Encased in `style(...)`. Contains styling XML tags (like `<bg=#color>`, `<color=#color>`, `<b>`, `<i>`, `<center>`, etc.) separated by commas for columns and semicolons for rows.
-- **Data Matrix**: Encased in `data(...)`. Contains text strings, images (like `<img src=... w=30 h=auto>`), or links (like `<url=...>`) separated by commas and semicolons.
+- **Style Matrix**: Encased in `style(...)`. Contains styling XML tags separated by commas for columns and semicolons for rows.
+- **Data Matrix**: Encased in `data(...)`. Contains text strings, images, or links separated by commas and semicolons.
+
+#### Supported Styling Tags:
+- `<bg=...>`: Sets the cell background color.
+- `<color=...>`: Sets the text/foreground color.
+- `<b>`, `<i>`, `<u>`, `<s>`: Applies bold, italic, underline, or strikethrough.
+- `<fs=...>`: Custom font size (e.g., `<fs=16px>`).
+- `<center>`, `<left>`, `<right>`: Alignment of the cell content.
+- `<cm>`, `<rm>`: Marks cell merges (column merge / row merge).
+- `<url=...>`: Creates a hyperlink.
+- `<img src=... w=... h=... m=...>`: Embeds an image with width (`w`), height (`h`), and margin (`m`).
+
+#### Color Formats:
+You can specify colors in two formats:
+1. **Hex Codes (Recommended)**: Any standard 3-digit or 6-digit hex code (e.g., `bg=#1e293b`, `color=#ffffff`).
+2. **Color Names**: Standard color names: `black`, `white`, `red`, `green`, `blue`, `yellow`, `cyan`, `magenta`, `gray` (or `grey`), `orange`, `pink`, `purple`, `brown`.
 
 ### 3. A Simple 2x2 Table Example
 
@@ -59,10 +74,10 @@ import tentags
 # 1. Preamble: 2 rows, 2 columns, border color #cbd5e1, cell height 40
 preamble = '2,2,1,"#cbd5e1","solid-1",1,40'
 
-# 2. Style: Blue header row, white data row
+# 2. Style: Green header row, white data row
 style = """style(
-<center><bg=#1e293b><color=#ffffff><b>, <center><bg=#1e293b><color=#ffffff><b>;
-<left><bg=#ffffff><color=#0f172a>, <left><bg=#ffffff><color=#0f172a>
+<center><bg=green><color=white><b>, <center><bg=green><color=white><b>;
+<left><bg=white><color=black>, <left><bg=white><color=black>
 )"""
 
 # 3. Data: Header labels and cell values

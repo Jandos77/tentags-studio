@@ -19,20 +19,20 @@ import tentags
 
 APP_DIR = Path(__file__).resolve().parent
 
-DEFAULT_PREAMBLE = '4,5,1,"#cbd5e1","solid-1",1,48,scale(A1=1,5;A3=1,2;D3=1,2;A4=1,5)'
+DEFAULT_PREAMBLE = '4,7,1,"#cbd5e1","solid-1",1,48'
 
 DEFAULT_STYLE = """style(
-<center><bg=#1e293b><color=#f8fafc><b><fs=20px>, , , , </fs></b></color></bg></center>;
-<center><bg=#f1f5f9><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#e2e8f0><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#cbd5e1><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#94a3b8><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#64748b><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>;
-<center><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></center>, , <center><bg=#ffffff></bg></center>, <center><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></center>, ;
-<center><bg=#eff6ff><color=#1d4ed8><b><u><fs=14px>, , , , </fs></u></b></color></bg></center>
+<cm><bg=#1e293b><color=#f8fafc><b><fs=20px>, , , , , , </fs></b></color></bg></cm>;
+<center><bg=#f1f5f9><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#e2e8f0><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#cbd5e1><color=#0f172a><b><fs=16px></fs></b></color></bg></center>, <center><bg=#94a3b8><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#64748b><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#475569><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>, <center><bg=#334155><color=#f8fafc><b><fs=16px></fs></b></color></bg></center>;
+<cm><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></cm>, , <center><bg=#ffffff></bg></center>, , <cm><bg=#f8fafc><color=#64748b><i><fs=11px></fs></i></color></bg></cm>, , ;
+<cm><bg=#eff6ff><color=#1d4ed8><b><u><fs=14px>, , , , , , </fs></u></b></color></bg></cm>
 )"""
 
 DEFAULT_DATA = """data(
-<cm>TenTags Studio</cm>, , , , ;
-T, e, n, T, g;
-<cm>Modern Python</cm>, , <img src=https://tentags.org/assets/img/tentags_logo.png w=30 h=auto m=12>, <cm>Reporting Engine</cm>, ;
-<cm><url=https://pycells.com>Powering PyCells Tables <img src=https://pycells.com/assets/img/PyCells_mds.png w=20 h=auto m=8></url></cm>, , , , 
+<cm>TenTags Studio, , , , , , </cm>;
+T, e, n, T, a, g, s;
+<cm>Modern Python, , </cm>, <img src=https://tentags.org/assets/img/tentags_logo.png w=30 h=auto m=12>, <cm>Reporting Engine, , </cm>;
+<cm><url=https://pycells.com>Powering PyCells Tables <img src=https://pycells.com/assets/img/PyCells_mds.png w=20 h=auto m=8></url>, , , , , , </cm>
 )"""
 
 

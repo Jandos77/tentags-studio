@@ -2120,19 +2120,56 @@ class CodeEditor(ttk.LabelFrame):
             pady=(2, 5)
         )
 
-        self.import_style_btn = ttk.Button(
+        # Custom styled buttons with hover effects
+        button_font = (
+            getattr(self.winfo_toplevel(), "ui_font_family", "Segoe UI"),
+            9,
+            "bold"
+        )
+
+        self.import_style_btn = tk.Button(
             self.editor_toolbar,
-            text="Import Style as CSV",
-            command=self.import_style_csv
+            text="Import Style from CSV",
+            command=self.import_style_csv,
+            font=button_font,
+            bg="#f1f5f9",         # Light slate background
+            fg="#475569",         # Slate foreground
+            activebackground="#e2e8f0",
+            activeforeground="#1e293b",
+            bd=0,                 # Flat borderless design
+            padx=10,
+            pady=4,
+            cursor="hand2"
         )
         self.import_style_btn.pack(side="left", padx=5)
 
-        self.import_data_btn = ttk.Button(
+        self.import_data_btn = tk.Button(
             self.editor_toolbar,
-            text="Import Data as CSV",
-            command=self.import_data_csv
+            text="Import Data from CSV",
+            command=self.import_data_csv,
+            font=button_font,
+            bg="#f1f5f9",         # Light slate background
+            fg="#475569",         # Slate foreground
+            activebackground="#e2e8f0",
+            activeforeground="#1e293b",
+            bd=0,                 # Flat borderless design
+            padx=10,
+            pady=4,
+            cursor="hand2"
         )
         self.import_data_btn.pack(side="left", padx=5)
+
+        # Hover micro-animations
+        def on_btn_enter(event):
+            event.widget.configure(bg="#e2e8f0", fg="#1e293b")
+
+        def on_btn_leave(event):
+            event.widget.configure(bg="#f1f5f9", fg="#475569")
+
+        self.import_style_btn.bind("<Enter>", on_btn_enter)
+        self.import_style_btn.bind("<Leave>", on_btn_leave)
+        self.import_data_btn.bind("<Enter>", on_btn_enter)
+        self.import_data_btn.bind("<Leave>", on_btn_leave)
 
         self.linenumbers.grid(
             row=1,
@@ -2415,7 +2452,7 @@ class CodeEditor(ttk.LabelFrame):
 
         # Open file chooser
         file_path = filedialog.askopenfilename(
-            title=f"Import {target_var.capitalize()} as CSV",
+            title=f"Import {target_var.capitalize()} from CSV",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
             parent=self
         )

@@ -138,7 +138,7 @@ cd tentags-studio
 pip install -r requirements.txt
 ```
 
-### 3. Run the Visual Studio
+### 3. Run the TenTags Studio
 Start the desktop UI compiler to visually build and export your dashboards:
 
 ```powershell

@@ -3504,13 +3504,8 @@ class TenTagsStudio(tk.Tk):
         value_node = value_nodes[-1]
         lines = code.splitlines(keepends=True)
 
-        def absolute_offset(line_number, byte_column):
-            line = lines[line_number - 1]
-            prefix = line.encode("utf-8")[:byte_column].decode(
-                "utf-8",
-                errors="ignore"
-            )
-            return sum(len(item) for item in lines[:line_number - 1]) + len(prefix)
+        def absolute_offset(line_number, col_offset):
+            return sum(len(item) for item in lines[:line_number - 1]) + col_offset
 
         start = absolute_offset(value_node.lineno, value_node.col_offset)
         end = absolute_offset(value_node.end_lineno, value_node.end_col_offset)
@@ -4172,20 +4167,6 @@ class TenTagsStudio(tk.Tk):
         )
         self.designer_style_dirty = False
         self.designer_data_dirty = False
-
-        current_style = self.extract_literal_assignment(code, "style")
-        if not self.style_matches_dimensions(
-            current_style,
-            model.rows,
-            model.cols
-        ):
-            resized_style = self._build_compact_style()
-            code = self.replace_literal_assignment(
-                code,
-                "style",
-                resized_style
-            )
-            self.compile_editor_model(code)
 
         if self.editor.get_code() != code:
             self.editor.set_code(code)

@@ -1122,7 +1122,6 @@ class PropertiesPanel(ttk.LabelFrame):
             "cell_height": model.cell_height,
             "scale": scale_text,
         })
-        self._notify_preview()
 
     def load_values(self, values):
 
@@ -2544,16 +2543,18 @@ class CodeEditor(ttk.LabelFrame):
 
         csv_rows = []
         try:
-            with open(file_path, "r", encoding="utf-8-sig") as f:
+            with open(file_path, "r", encoding="utf-8-sig", newline="") as f:
                 reader = csv.reader(f)
                 for row in reader:
-                    csv_rows.append(row)
+                    if row:
+                        csv_rows.append(row)
         except Exception:
             try:
-                with open(file_path, "r", encoding="cp1251") as f:
+                with open(file_path, "r", encoding="cp1251", newline="") as f:
                     reader = csv.reader(f)
                     for row in reader:
-                        csv_rows.append(row)
+                        if row:
+                            csv_rows.append(row)
             except Exception as exc:
                 messagebox.showerror(
                     "Import Error",
@@ -2594,66 +2595,7 @@ class CodeEditor(ttk.LabelFrame):
             )
             return
 
-        # Parse existing matrices
-        def parse_matrix(matrix_str, var_name):
-            inner = matrix_str.strip()
-            prefix = f"{var_name}("
-            if inner.lower().startswith(prefix.lower()):
-                inner = inner[len(prefix):]
-            if inner.endswith(")"):
-                inner = inner[:-1]
-            inner = inner.strip()
-
-            raw_rows = inner.split(";")
-            rows_list = []
-            for r in raw_rows:
-                r_clean = r.strip()
-                if r_clean or len(raw_rows) > 1:
-                    cells = [c.strip() for c in r_clean.split(",")]
-                    rows_list.append(cells)
-            return rows_list
-
-        style_rows = parse_matrix(style_str, "style")
-        data_rows = parse_matrix(data_str, "data")
-
-        # Append to target matrix
-        if target_var == "style":
-            # Strip trailing empty rows from style so it aligns with active data
-            while style_rows and all(c == "" for c in style_rows[-1]):
-                style_rows.pop()
-            style_rows.extend(csv_rows)
-        else:
-            # Strip trailing empty rows from data so it aligns with active style
-            while data_rows and all(c == "" for c in data_rows[-1]):
-                data_rows.pop()
-            data_rows.extend(csv_rows)
-
-        # Determine new dimensions
-        new_rows = max(len(style_rows), len(data_rows))
-        new_cols = max(
-            max(len(r) for r in style_rows) if style_rows else 0,
-            max(len(r) for r in data_rows) if data_rows else 0
-        )
-
-        # Re-serialize matrices
-        def serialize_matrix(rows_list, var_name, target_rows, target_cols):
-            # Pad columns
-            for row in rows_list:
-                while len(row) < target_cols:
-                    row.append("")
-            # Pad rows
-            while len(rows_list) < target_rows:
-                rows_list.append([""] * target_cols)
-
-            serialized = []
-            for row in rows_list:
-                serialized.append(", ".join(row))
-            return f"{var_name}(\n" + ";\n".join(serialized) + "\n)"
-
-        new_style_val = serialize_matrix(style_rows, "style", new_rows, new_cols)
-        new_data_val = serialize_matrix(data_rows, "data", new_rows, new_cols)
-
-        # Update preamble dimensions
+        # Parse preamble dimensions
         m = re.match(r"^(\d+)\s*,\s*(\d+)(.*)$", preamble_str.strip())
         if not m:
             messagebox.showerror(
@@ -2662,14 +2604,68 @@ class CodeEditor(ttk.LabelFrame):
                 parent=self
             )
             return
+
+        preamble_rows = int(m.group(1))
+        preamble_cols = int(m.group(2))
+
+        # Extract current target matrix content
+        prefix = f"{target_var}("
+        target_str = style_str if target_var == "style" else data_str
+        target_inner = target_str.strip()
+        if target_inner.lower().startswith(prefix.lower()):
+            target_inner = target_inner[len(prefix):]
+        if target_inner.endswith(")"):
+            target_inner = target_inner[:-1]
+        target_inner = target_inner.strip()
+
+        # Check if the current target matrix is exactly the default template
+        default_target = DEFAULT_STYLE if target_var == "style" else DEFAULT_DATA
+        default_inner = default_target.strip()
+        if default_inner.lower().startswith(prefix.lower()):
+            default_inner = default_inner[len(prefix):]
+        if default_inner.endswith(")"):
+            default_inner = default_inner[:-1]
+        default_inner = default_inner.strip()
+        default_rows = [r.strip() for r in default_inner.split(";") if r.strip()]
+
+        if target_inner:
+            existing_rows = [r.strip() for r in target_inner.split(";") if r.strip()]
+        else:
+            existing_rows = []
+
+        # Convert CSV rows to DSL strings
+        csv_dsl_rows = []
+        for r in csv_rows:
+            cleaned_r = [c.strip() for c in r]
+            if cleaned_r and cleaned_r[-1].endswith(";"):
+                cleaned_r[-1] = cleaned_r[-1][:-1]
+            csv_dsl_rows.append(", ".join(cleaned_r))
+        
+        csv_col_count = max((len(r) for r in csv_rows), default=0)
+
+        # Overwrite if target is empty or identical to the default template
+        if existing_rows == default_rows or not existing_rows:
+            all_target_rows = csv_dsl_rows
+        else:
+            all_target_rows = existing_rows + csv_dsl_rows
+
+        new_target_val = f"{target_var}(\n" + ";\n".join(all_target_rows) + "\n)"
+
+        # Calculate new preamble dimensions
+        needed_rows = len(all_target_rows)
+        if existing_rows == default_rows or not existing_rows:
+            new_rows = needed_rows
+        else:
+            new_rows = max(preamble_rows, needed_rows)
+        new_cols = max(preamble_cols, csv_col_count)
         new_preamble_val = f"{new_rows},{new_cols}{m.group(3)}"
 
         # Replace back into code
         try:
             new_code = code
-            new_code = app.replace_literal_assignment(new_code, "preamble", new_preamble_val)
-            new_code = app.replace_literal_assignment(new_code, "style", new_style_val)
-            new_code = app.replace_literal_assignment(new_code, "data", new_data_val)
+            if new_preamble_val != preamble_str:
+                new_code = app.replace_literal_assignment(new_code, "preamble", new_preamble_val)
+            new_code = app.replace_literal_assignment(new_code, target_var, new_target_val)
         except Exception as exc:
             messagebox.showerror(
                 "Replacement Error",
@@ -2680,8 +2676,7 @@ class CodeEditor(ttk.LabelFrame):
 
         # Update editor code
         self.set_code(new_code)
-        # Trigger modification callback to update designer
-        self._on_modified()
+        app.mark_code_clean()
         messagebox.showinfo(
             "Success",
             f"Successfully imported and appended CSV rows to {target_var}.",
@@ -3204,6 +3199,11 @@ class TenTagsStudio(tk.Tk):
             ", ".join(expressions[row * self.designer.cols:(row + 1) * self.designer.cols])
             for row in range(self.designer.rows)
         ]
+        
+        # Trim trailing empty rows to prevent style bloat
+        while rows and all(expr.strip() == "" for expr in expressions[(len(rows)-1) * self.designer.cols : len(rows) * self.designer.cols]):
+            rows.pop()
+            
         return "style(\n" + ";\n".join(rows) + "\n)"
 
     def _data_expression(self, state):
@@ -3281,6 +3281,9 @@ class TenTagsStudio(tk.Tk):
         if all_data_empty:
             data = "data(\n)"
         else:
+            # Trim trailing empty rows to prevent data bloat
+            while data_grid and all(cell.strip() == "" for cell in data_grid[-1]):
+                data_grid.pop()
             data_rows = [", ".join(row) for row in data_grid]
             data = "data(\n" + ";\n".join(data_rows) + "\n)"
 
@@ -3568,11 +3571,13 @@ class TenTagsStudio(tk.Tk):
         )
 
         preamble = self.properties.get_preamble()
-        style, data = self.build_blocks()
         code = self.editor.get_code()
+        current_style = self.extract_literal_assignment(code, "style")
+        current_data = self.extract_literal_assignment(code, "data")
         code = self.replace_literal_assignment(code, "preamble", preamble)
-        code = self.replace_literal_assignment(code, "style", style)
-        code = self.replace_literal_assignment(code, "data", data)
+
+        style = current_style if current_style is not None else "style(\n)"
+        data = current_data if current_data is not None else "data(\n)"
 
         tentags.compile(preamble, style, data)
         self.validate_edited_code(code)

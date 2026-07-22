@@ -10,7 +10,7 @@
 
 # 🏷️ TenTags Studio & Gallery
 
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/Jandos77/tentags-studio)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/Jandos77/tentags-studio)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
 A professional low-code visual designer and programmatically compiled dashboard generation suite powered by the **TenTags** library. This project allows developers to visually design complex styled matrices and export them into high-fidelity PDF documents, formatted Excel spreadsheets, and clean HTML pages.

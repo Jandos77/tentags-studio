@@ -4302,7 +4302,7 @@ class TenTagsStudio(tk.Tk):
             )
 
             result = subprocess.run(
-                [sys.executable, str(script_path)],
+                [sys.executable, "-X", "utf8", str(script_path)],
                 cwd=str(APP_DIR),
                 capture_output=True,
                 text=True,

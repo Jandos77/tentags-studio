@@ -118,7 +118,12 @@ class ImagePreviewCache:
                 decoded = decoded[1:]
         path = Path(decoded)
         if not path.is_absolute():
-            path = APP_DIR / path
+            if (APP_DIR / path).is_file():
+                path = APP_DIR / path
+            elif (APP_DIR.parent / path).is_file():
+                path = APP_DIR.parent / path
+            else:
+                path = APP_DIR / path
         return path.resolve()
 
     def _load(self, source):
